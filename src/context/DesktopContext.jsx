@@ -15,6 +15,9 @@ const initialState = {
   spotlightOpen: false,
   selectedDesktopIcon: null,
   maximizedWindowId: null,
+  wallpaper: 'geranimo-bKhETeDV1WM-unsplash.jpg',
+  dockAutoHide: false,
+  magnificationEnabled: true,
 };
 
 function reducer(state, action) {
@@ -170,6 +173,18 @@ function reducer(state, action) {
       };
     }
 
+    case 'SET_WALLPAPER': {
+      return { ...state, wallpaper: action.name };
+    }
+
+    case 'TOGGLE_DOCK_AUTO_HIDE': {
+      return { ...state, dockAutoHide: !state.dockAutoHide };
+    }
+
+    case 'TOGGLE_MAGNIFICATION': {
+      return { ...state, magnificationEnabled: !state.magnificationEnabled };
+    }
+
     case 'MAXIMIZE_WINDOW': {
       const w = state.windows.find((w) => w.id === action.id);
       if (!w) return state;
@@ -190,7 +205,7 @@ function reducer(state, action) {
         maximizedWindowId: action.id,
         windows: state.windows.map((win) =>
           win.id === action.id
-            ? { ...win, x: 0, y: 0, width: window.innerWidth, height: window.innerHeight - 28 - 64, _prevX: win.x, _prevY: win.y, _prevW: win.width, _prevH: win.height }
+            ? { ...win, x: 0, y: 0, width: window.innerWidth, height: window.innerHeight - 28 - (state.dockAutoHide ? 0 : 64), _prevX: win.x, _prevY: win.y, _prevW: win.width, _prevH: win.height }
             : win
         ),
       };
@@ -238,6 +253,9 @@ export function DesktopProvider({ children }) {
   const toggleSpotlight = useCallback(() => dispatch({ type: 'TOGGLE_SPOTLIGHT' }), []);
   const selectDesktopIcon = useCallback((id) => dispatch({ type: 'SELECT_DESKTOP_ICON', id }), []);
   const maximizeWindow = useCallback((id, prevRect) => dispatch({ type: 'MAXIMIZE_WINDOW', id, ...prevRect }), []);
+  const setWallpaper = useCallback((name) => dispatch({ type: 'SET_WALLPAPER', name }), []);
+  const toggleDockAutoHide = useCallback(() => dispatch({ type: 'TOGGLE_DOCK_AUTO_HIDE' }), []);
+  const toggleMagnification = useCallback(() => dispatch({ type: 'TOGGLE_MAGNIFICATION' }), []);
 
   const value = useMemo(() => ({
     ...state,
@@ -251,7 +269,10 @@ export function DesktopProvider({ children }) {
     toggleSpotlight,
     selectDesktopIcon,
     maximizeWindow,
-  }), [state, openApp, closeWindow, minimizeWindow, focusWindow, moveWindow, resizeWindow, setActive, toggleSpotlight, selectDesktopIcon, maximizeWindow]);
+    setWallpaper,
+    toggleDockAutoHide,
+    toggleMagnification,
+  }), [state, openApp, closeWindow, minimizeWindow, focusWindow, moveWindow, resizeWindow, setActive, toggleSpotlight, selectDesktopIcon, maximizeWindow, setWallpaper, toggleDockAutoHide, toggleMagnification]);
 
   return (
     <DesktopContext.Provider value={value}>

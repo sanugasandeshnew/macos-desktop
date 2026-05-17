@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect, useRef } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { DesktopProvider, useDesktop } from './context/DesktopContext';
 import MenuBar from './components/MenuBar';
 import Dock from './components/Dock';
@@ -10,29 +10,26 @@ import ContextMenu from './components/ContextMenu';
 
 function LoadingScreen({ onDone }) {
   const [fadeOut, setFadeOut] = useState(false);
-  const audioRef = useRef(null);
 
   useEffect(() => {
-    const audio = new Audio('https://mp3tourl.com/audio/1778868134568-499584f1-f59e-45b6-8685-4bd8d413f14c.mp3');
-    audioRef.current = audio;
-    audio.volume = 0.5;
-    audio.play().catch(() => {});
     const timer = setTimeout(() => {
       setFadeOut(true);
       setTimeout(onDone, 600);
-    }, 2500);
-    return () => { clearTimeout(timer); audio.pause(); audio.src = ''; };
+    }, 3500);
+    return () => clearTimeout(timer);
   }, [onDone]);
 
   return (
-    <div style={{
-      position: 'fixed', inset: 0, zIndex: 999999,
-      display: 'flex', flexDirection: 'column',
-      alignItems: 'center', justifyContent: 'center',
-      background: fadeOut ? 'rgba(0,0,0,0)' : '#000',
-      transition: 'background 0.6s cubic-bezier(0.4, 0, 0.2, 1)',
-      pointerEvents: 'none',
-    }}>
+    <div
+      style={{
+        position: 'fixed', inset: 0, zIndex: 999999,
+        display: 'flex', flexDirection: 'column',
+        alignItems: 'center', justifyContent: 'center',
+        background: fadeOut ? 'rgba(0,0,0,0)' : '#000',
+        transition: 'background 0.6s cubic-bezier(0.4, 0, 0.2, 1)',
+        pointerEvents: 'none',
+      }}
+    >
       <svg width="80" height="80" viewBox="0 0 24 24" fill="none" style={{
         opacity: fadeOut ? 0 : 1,
         transition: 'opacity 0.4s ease-out',
@@ -59,6 +56,10 @@ function Desktop() {
 
   const closeCtx = useCallback(() => setCtxMenu(null), []);
 
+  const handleIconCtx = useCallback((menu) => {
+    setCtxMenu(menu);
+  }, []);
+
   const addFolder = useCallback(() => {
     const id = 'folder-' + Date.now();
     const n = extraItems.filter((i) => i.id.startsWith('folder-')).length + 1;
@@ -70,16 +71,16 @@ function Desktop() {
     setCtxMenu({
       x: e.clientX, y: e.clientY,
       items: [
-        { label: 'New Folder', action: addFolder, shortcut: '⇧⌘N' },
+        { label: 'New Folder', action: addFolder, shortcut: '\u21E7\u2318N' },
         { label: 'New File', action: () => {} },
         { sep: true },
         { label: 'Get Info', action: () => {} },
-        { label: 'Change Wallpaper...', action: () => {} },
+        { label: 'Change Wallpaper...', action: () => openApp('wallpaper') },
         { sep: true },
-        { label: 'Clean Up By', action: () => {}, shortcut: '⌃⌘0' },
-        { label: 'Show View Options', action: () => {}, shortcut: '⌘J' },
+        { label: 'Clean Up By', action: () => {}, shortcut: '\u2303\u23180' },
+        { label: 'Show View Options', action: () => {}, shortcut: '\u2318J' },
         { sep: true },
-        { label: 'Paste', action: () => {}, shortcut: '⌘V' },
+        { label: 'Paste', action: () => {}, shortcut: '\u2318V' },
       ],
     });
   }, [addFolder]);
@@ -100,7 +101,7 @@ function Desktop() {
       <Wallpaper />
       <MenuBar />
       <div style={{ flex: 1, position: 'relative', overflow: 'hidden' }}>
-        <DesktopIcons extraItems={extraItems} />
+        <DesktopIcons extraItems={extraItems} onContext={handleIconCtx} />
         {windows.map((win) => (
           <Window key={win.id} win={win} />
         ))}
@@ -114,6 +115,12 @@ function Desktop() {
 
 export default function App() {
   const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const audio = new Audio('https://mp3tourl.com/audio/1778868134568-499584f1-f59e-45b6-8685-4bd8d413f14c.mp3');
+    audio.volume = 0.5;
+    audio.play().catch(() => {});
+  }, []);
 
   return loading ? (
     <LoadingScreen onDone={() => setLoading(false)} />

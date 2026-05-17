@@ -4,13 +4,14 @@ import { DOCK_ICONS_SVG } from '../data/apps';
 
 export default function Window({ win }) {
   const ctx = useDesktop();
-  const { closeWindow, minimizeWindow, setActive, moveWindow, maximizeWindow, maximizedWindowId } = ctx;
+  const { closeWindow, minimizeWindow, setActive, moveWindow, resizeWindow, maximizeWindow, maximizedWindowId } = ctx;
   const isActive = ctx.activeWindowId === win.id;
   const [dragging, setDragging] = useState(null);
   const [resizing, setResizing] = useState(null);
   const [size, setSize] = useState({ w: win.width, h: win.height });
   const [exiting, setExiting] = useState(false);
   const [minimizing, setMinimizing] = useState(false);
+  const [animDone, setAnimDone] = useState(false);
   const winRef = useRef(null);
   const posRef = useRef({ x: win.x, y: win.y });
   const isMaximized = maximizedWindowId === win.id;
@@ -45,6 +46,10 @@ export default function Window({ win }) {
     };
     const handleMouseUp = () => {
       if (dragging && !isMaximized) moveWindow(win.id, posRef.current.x, posRef.current.y);
+      if (resizing && !isMaximized) {
+        resizeWindow(win.id, parseInt(el.style.width), parseInt(el.style.height));
+        setSize({ w: parseInt(el.style.width), h: parseInt(el.style.height) });
+      }
       setDragging(null);
       setResizing(null);
     };
@@ -54,7 +59,7 @@ export default function Window({ win }) {
       window.removeEventListener('mousemove', handleMouseMove);
       window.removeEventListener('mouseup', handleMouseUp);
     };
-  }, [dragging, resizing, win.id, moveWindow, isMaximized]);
+  }, [dragging, resizing, win.id, moveWindow, resizeWindow, isMaximized]);
 
   const handleTitleMouseDown = useCallback((e) => {
     if (isMaximized) return;
@@ -94,10 +99,18 @@ export default function Window({ win }) {
       });
     } else {
       maximizeWindow(win.id, {
-        prevX: pos.x, prevY: pos.y, prevW: size.w, prevH: size.h,
+        prevX: posRef.current.x, prevY: posRef.current.y, prevW: size.w, prevH: size.h,
       });
     }
   };
+
+  useEffect(() => {
+    const el = winRef.current;
+    if (!el) return;
+    const handler = () => setAnimDone(true);
+    el.addEventListener('animationend', handler);
+    return () => el.removeEventListener('animationend', handler);
+  }, []);
 
   const appContent = getAppContent(win.appId);
 
@@ -110,6 +123,8 @@ export default function Window({ win }) {
     ? 'animate-window-close'
     : minimizing
     ? 'animate-minimize'
+    : animDone
+    ? ''
     : 'animate-window-open';
 
   return (
@@ -124,7 +139,7 @@ export default function Window({ win }) {
         height: displayH,
         transform: isMaximized ? 'translate(0, 0)' : `translate(${posRef.current.x}px, ${posRef.current.y}px)`,
         willChange: dragging || resizing ? 'transform' : 'auto',
-        background: 'rgba(35, 35, 40, 0.97)',
+        background: isActive ? 'rgba(35, 35, 40, 0.97)' : 'rgba(25, 25, 30, 0.94)',
         backdropFilter: 'blur(40px)',
         borderRadius: isMaximized ? 0 : 'var(--radius-window)',
         boxShadow: isActive
@@ -137,7 +152,7 @@ export default function Window({ win }) {
         pointerEvents: exiting ? 'none' : 'auto',
         transition: isMaximized
           ? 'all 0.25s cubic-bezier(0.4, 0, 0.2, 1)'
-          : (dragging || resizing ? 'none' : ''),
+          : (dragging || resizing ? 'none' : 'box-shadow 0.2s, background 0.2s'),
         transformOrigin: 'center center',
       }}
       onMouseDown={() => setActive(win.id)}
@@ -155,28 +170,28 @@ export default function Window({ win }) {
       >
         <div className="window-btn" style={{ display: 'flex', gap: 8, position: 'relative', zIndex: 2 }}>
           <button onClick={handleClose}
-            style={{ width: 12, height: 12, borderRadius: '50%', border: 'none', background: '#ff5f57', cursor: 'pointer',
-              display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 9, color: 'transparent', transition: 'color 0.1s', lineHeight: 1 }}
-            onMouseEnter={(e) => { e.currentTarget.style.color = '#4a0000'; e.currentTarget.textContent = '✕'; }}
+            style={{ width: 12, height: 12, borderRadius: '50%', border: 'none', background: isActive ? '#ff5f57' : '#555', cursor: 'pointer',
+              display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 9, color: 'transparent', transition: 'color 0.1s', lineHeight: 1, opacity: isActive ? 1 : 0.4 }}
+            onMouseEnter={(e) => { if (isActive) { e.currentTarget.style.color = '#4a0000'; e.currentTarget.textContent = '\u2715'; } }}
             onMouseLeave={(e) => { e.currentTarget.style.color = 'transparent'; e.currentTarget.textContent = ''; }}
           />
           <button onClick={handleMinimize}
-            style={{ width: 12, height: 12, borderRadius: '50%', border: 'none', background: '#febc2e', cursor: 'pointer',
-              display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 9, color: 'transparent', transition: 'color 0.1s', lineHeight: 1 }}
-            onMouseEnter={(e) => { e.currentTarget.style.color = '#5a4000'; e.currentTarget.textContent = '−'; }}
+            style={{ width: 12, height: 12, borderRadius: '50%', border: 'none', background: isActive ? '#febc2e' : '#555', cursor: 'pointer',
+              display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 9, color: 'transparent', transition: 'color 0.1s', lineHeight: 1, opacity: isActive ? 1 : 0.4 }}
+            onMouseEnter={(e) => { if (isActive) { e.currentTarget.style.color = '#5a4000'; e.currentTarget.textContent = '\u2212'; } }}
             onMouseLeave={(e) => { e.currentTarget.style.color = 'transparent'; e.currentTarget.textContent = ''; }}
           />
           <button onClick={handleGreenClick}
-            style={{ width: 12, height: 12, borderRadius: '50%', border: 'none', background: '#28c840', cursor: 'pointer',
-              display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 9, color: 'transparent', transition: 'color 0.1s', lineHeight: 1 }}
-            onMouseEnter={(e) => { e.currentTarget.style.color = '#003a00'; e.currentTarget.textContent = isMaximized ? '❐' : '⤢'; }}
+            style={{ width: 12, height: 12, borderRadius: '50%', border: 'none', background: isActive ? '#28c840' : '#555', cursor: 'pointer',
+              display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 9, color: 'transparent', transition: 'color 0.1s', lineHeight: 1, opacity: isActive ? 1 : 0.4 }}
+            onMouseEnter={(e) => { if (isActive) { e.currentTarget.style.color = '#003a00'; e.currentTarget.textContent = isMaximized ? '\u2750' : '\u2922'; } }}
             onMouseLeave={(e) => { e.currentTarget.style.color = 'transparent'; e.currentTarget.textContent = ''; }}
           />
         </div>
         <div style={{
           position: 'absolute', left: '50%', transform: 'translateX(-50%)',
-          fontSize: 12, fontWeight: 600, color: 'rgba(255,255,255,0.85)',
-          display: 'flex', alignItems: 'center', gap: 6, pointerEvents: 'none',
+          fontSize: 12, fontWeight: 600, color: isActive ? 'rgba(255,255,255,0.85)' : 'rgba(255,255,255,0.35)',
+          display: 'flex', alignItems: 'center', gap: 6, pointerEvents: 'none', opacity: isActive ? 1 : 0.5,
         }}>
           {win.iconSrc ? (
             <img src={win.iconSrc} alt="" style={{ width: 14, height: 14 }} />
@@ -192,6 +207,7 @@ export default function Window({ win }) {
       </div>
       <div className="window-content" style={{
         flex: 1, overflow: 'auto', color: 'white', fontSize: 13, position: 'relative',
+        opacity: isActive ? 1 : 0.6, transition: 'opacity 0.15s',
       }}>
         {appContent}
       </div>
@@ -221,6 +237,7 @@ function getAppContent(appId) {
     case 'settings': return <SettingsContent />;
     case 'airdrop': return <AirDropContent />;
     case 'textedit': return <TextEditContent />;
+    case 'wallpaper': return <WallpaperContent />;
     default: return <div style={{ padding: 40, textAlign: 'center', color: '#888' }}>This app has no content</div>;
   }
 }
@@ -708,6 +725,51 @@ function SettingsContent() {
             </div>
           ))}
         </div>
+      </div>
+    </div>
+  );
+}
+
+const WALLPAPERS = [
+  { name: 'geranimo-bKhETeDV1WM-unsplash.jpg', label: 'Squirrel' },
+  { name: 'jack-anstey-XVoyX7l9ocY-unsplash.jpg', label: 'Abstract' },
+  { name: 'luca-bravo-ii5JY_46xH0-unsplash.jpg', label: 'Dark' },
+];
+
+function WallpaperContent() {
+  const { wallpaper, setWallpaper } = useDesktop();
+  const BASE = import.meta.env.BASE_URL;
+
+  return (
+    <div style={{ height: '100%', overflow: 'auto', padding: 20 }}>
+      <div style={{ fontSize: 16, fontWeight: 700, marginBottom: 16 }}>Wallpaper</div>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 12 }}>
+        {WALLPAPERS.map((wp) => (
+          <div
+            key={wp.name}
+            onClick={() => setWallpaper(wp.name)}
+            style={{
+              borderRadius: 10,
+              overflow: 'hidden',
+              cursor: 'pointer',
+              border: wallpaper === wp.name ? '2px solid #4a9eff' : '2px solid transparent',
+              transition: 'border 0.15s',
+            }}
+          >
+            <img
+              src={BASE + 'wallpapers/' + wp.name}
+              alt={wp.label}
+              style={{ width: '100%', height: 120, objectFit: 'cover', display: 'block' }}
+            />
+            <div style={{
+              padding: '6px 10px', fontSize: 12, fontWeight: 500,
+              background: wallpaper === wp.name ? 'rgba(74,158,255,0.15)' : 'transparent',
+            }}>
+              {wp.label}
+              {wallpaper === wp.name && <span style={{ float: 'right', color: '#4a9eff' }}>\u2713</span>}
+            </div>
+          </div>
+        ))}
       </div>
     </div>
   );

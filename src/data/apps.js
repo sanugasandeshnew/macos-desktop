@@ -1,3 +1,5 @@
+const BASE = import.meta.env.BASE_URL;
+
 export const APPS = [
   {
     id: 'finder',
@@ -5,70 +7,70 @@ export const APPS = [
     defaultWidth: 800,
     defaultHeight: 500,
     defaultApp: true,
-    iconSrc: '/icons/files.png',
+    iconSrc: BASE + 'icons/files.png',
   },
   {
     id: 'terminal',
     name: 'Terminal',
     defaultWidth: 640,
     defaultHeight: 400,
-    iconSrc: '/icons/terminal.png',
+    iconSrc: BASE + 'icons/terminal.png',
   },
   {
     id: 'vscode',
     name: 'VS Code',
     defaultWidth: 960,
     defaultHeight: 600,
-    iconSrc: '/icons/vscode.png',
+    iconSrc: BASE + 'icons/vscode.png',
   },
   {
     id: 'safari',
     name: 'Safari',
     defaultWidth: 1024,
     defaultHeight: 640,
-    iconSrc: '/icons/safari.png',
+    iconSrc: BASE + 'icons/safari.png',
   },
   {
     id: 'notes',
     name: 'Notes',
     defaultWidth: 500,
     defaultHeight: 400,
-    iconSrc: '/icons/notes.png',
+    iconSrc: BASE + 'icons/notes.png',
   },
   {
     id: 'music',
     name: 'Music',
     defaultWidth: 600,
     defaultHeight: 450,
-    iconSrc: '/icons/music.png',
+    iconSrc: BASE + 'icons/music.png',
   },
   {
     id: 'photos',
     name: 'Photos',
     defaultWidth: 800,
     defaultHeight: 500,
-    iconSrc: '/icons/photos.png',
+    iconSrc: BASE + 'icons/photos.png',
   },
   {
     id: 'settings',
     name: 'System Settings',
     defaultWidth: 700,
     defaultHeight: 500,
-    iconSrc: '/icons/settings.png',
+    iconSrc: BASE + 'icons/settings.png',
   },
   {
     id: 'airdrop',
     name: 'AirDrop',
     defaultWidth: 500,
     defaultHeight: 400,
-    iconSrc: '/icons/airdrop.png',
+    iconSrc: BASE + 'icons/airdrop.png',
   },
   {
     id: 'textedit',
     name: 'TextEdit',
     defaultWidth: 600,
     defaultHeight: 450,
-    iconSrc: '/icons/textedit.png',
+    iconSrc: BASE + 'icons/textedit.png',
   },
   {
     id: 'trash',
@@ -76,7 +78,14 @@ export const APPS = [
     defaultWidth: 400,
     defaultHeight: 300,
     dockOnly: true,
-    iconSrc: '/icons/bin.png',
+    iconSrc: BASE + 'icons/bin.png',
+  },
+  {
+    id: 'wallpaper',
+    name: 'Wallpaper',
+    defaultWidth: 600,
+    defaultHeight: 450,
+    iconSrc: BASE + 'icons/files.png',
   },
 ];
 
@@ -122,5 +131,8 @@ export const DOCK_ICONS_SVG = {
   ]},
   trash: { viewBox: '0 0 24 24', color: '#8e8e93', paths: [
     'M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z',
+  ]},
+  wallpaper: { viewBox: '0 0 24 24', color: '#4a9eff', paths: [
+    'M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z',
   ]},
 };
